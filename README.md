@@ -19,25 +19,25 @@
 
 ## Table of Contents
 
-- [At a Glance](#-at-a-glance)
-- [The Problem and Goals](#-the-problem-and-goals)
-- [What the Project Does](#-what-the-project-does)
-- [Project Journey](#-project-journey)
-- [Final System Architecture](#-final-system-architecture)
-- [The CleanSpeak Pipeline](#-the-cleanspeak-pipeline)
-- [Models and Fine-Tuning](#-models-and-fine-tuning)
-- [Training Loss](#-training-loss)
-- [Evaluation and Benchmarks](#-evaluation-and-benchmarks)
-- [SaafBol Chrome Extension](#-saafbol-chrome-extension)
-- [Run Locally](#-run-locally)
-- [CLI and API](#-cli-and-api)
-- [Repository Structure](#-repository-structure)
-- [Technology Stack](#-technology-stack)
-- [Limitations and Known Failures](#-limitations-and-known-failures)
-- [Privacy, Ethics, and Licensing](#-privacy-ethics-and-licensing)
-- [Future Work](#-future-work)
-- [References](#-references)
-- [Contact](#-contact)
+- [At a Glance](#at-a-glance)
+- [The Problem and Goals](#the-problem-and-goals)
+- [What the Project Does](#what-the-project-does)
+- [Project Journey](#project-journey)
+- [Final System Architecture](#final-system-architecture)
+- [The CleanSpeak Pipeline](#the-cleanspeak-pipeline)
+- [Models and Fine-Tuning](#models-and-fine-tuning)
+- [Training Loss](#training-loss)
+- [Evaluation and Benchmarks](#evaluation-and-benchmarks)
+- [SaafBol Chrome Extension](#saafbol-chrome-extension)
+- [Run Locally](#run-locally)
+- [CLI and API](#cli-and-api)
+- [Repository Structure](#repository-structure)
+- [Technology Stack](#technology-stack)
+- [Limitations and Known Failures](#limitations-and-known-failures)
+- [Privacy, Ethics, and Licensing](#privacy-ethics-and-licensing)
+- [Future Work](#future-work)
+- [References](#references)
+- [Contact](#contact)
 
 ---
 
@@ -811,7 +811,7 @@ The handover prioritizes the following improvements:
 
 ---
 
-## 📬 Contact
+## Contact
 
 Interested in accessibility-focused AI, computer vision, or ML-integrated applications?
 
