@@ -24,7 +24,6 @@
   let lexTried = 0;
   let current = null;           // the text box we are attached to
   let snap = null;              // what we sent for the full clean-up (so "Apply" replaces exactly that text)
-  let runId = 0;
   let hits = [];                // [{issue, rect}] used to hit-test clicks on underlined words
   let botPos = { x: 0, y: 0 };
   let dragging = false;
@@ -83,16 +82,103 @@
   }
 
   // ------------------------------------------------------------------ 3. reading and writing text safely
-  function snapshot(el) {
-    if (el instanceof HTMLTextAreaElement) {
-      const s = el.selectionStart, e = el.selectionEnd, v = el.value;
-      const hasSel = s !== e;
-      return { el, kind: "input", start: hasSel ? s : 0, end: hasSel ? e : v.length, text: hasSel ? v.slice(s, e) : v };
+  // What has already been cleaned? Per box we remember the text as it was right after the last clean-up, so the next
+  // check sends only the sentences that were ADDED or CHANGED since then (never the whole box again).
+  const baselines = new WeakMap();
+
+  function blockOf(node, root) {          // nearest block-level ancestor: tells us where a new paragraph starts
+    for (let p = node.parentElement; p; p = p.parentElement) {
+      if (p === root) return root;
+      const d = getComputedStyle(p).display;
+      if (d !== "inline" && d !== "contents" && !d.startsWith("inline")) return p;
     }
-    const sel = window.getSelection();
-    const inside = sel && sel.rangeCount && !sel.isCollapsed && el.contains(sel.anchorNode);
-    if (inside) return { el, kind: "rich", range: sel.getRangeAt(0).cloneRange(), text: sel.toString() };
-    return { el, kind: "rich", range: null, text: el.innerText };
+    return root;
+  }
+
+  // The box's text plus, for rich editors, where each text node sits in it (so a span can be turned back into a Range)
+  function flatText(el) {
+    if (el instanceof HTMLTextAreaElement) return { text: el.value, segs: null };
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+    const segs = [];
+    let text = "", prev = null, n, budget = 20000;
+    while (budget > 0 && (n = walker.nextNode())) {
+      if (n.nodeType === 1) { if (n.tagName === "BR") { text += "\n"; prev = "br"; } continue; }
+      const block = blockOf(n, el);
+      if (prev && prev !== "br" && block !== prev) text += "\n";   // new paragraph = new line
+      segs.push({ node: n, start: text.length, end: text.length + n.data.length });
+      text += n.data;
+      budget -= n.data.length;
+      prev = block;
+    }
+    return { text, segs };
+  }
+
+  function trimSpan(text, a, b) {
+    while (a < b && /\s/.test(text[a])) a++;
+    while (b > a && /\s/.test(text[b - 1])) b--;
+    return a < b ? { a, b } : null;
+  }
+
+  // The span of `cur` that is new or changed compared with `base`, widened to whole sentences. null = nothing new.
+  function newRegion(base, cur) {
+    if (base === undefined) return trimSpan(cur, 0, cur.length);   // nothing cleaned yet in this box: the whole box
+    if (base === cur) return null;
+    let p = 0;
+    const max = Math.min(base.length, cur.length);
+    while (p < max && base[p] === cur[p]) p++;                       // common start
+    let q = 0;
+    while (q < max - p && base[base.length - 1 - q] === cur[cur.length - 1 - q]) q++;   // common end
+    let a = p, b = cur.length - q;                                   // changed span in the current text
+    // text added after everything that was already cleaned starts exactly where the old text ended (even if that
+    // text has no final full stop); only edits INSIDE old text are widened back to the start of their sentence
+    if (p < base.length) while (a > 0 && !/[.!?\n]/.test(cur[a - 1])) a--;
+    while (b < cur.length && !/[.!?]/.test(cur[b - 1] || "") && cur[b] !== "\n") b++;   // ...and to its end
+    return trimSpan(cur, a, b);
+  }
+
+  function rangeFor(flat, a, b) {
+    const sa = flat.segs.find((x) => a >= x.start && a < x.end);
+    const sb = flat.segs.find((x) => b > x.start && b <= x.end);
+    if (!sa || !sb) return null;
+    const r = document.createRange();
+    r.setStart(sa.node, a - sa.start);
+    r.setEnd(sb.node, b - sb.start);
+    return r;
+  }
+
+  function markHandled(el) {   // after a clean-up: everything now in the box counts as done
+    const ws = (t) => t.replace(/\s+/g, " ").trim();
+    const now = flatText(el).text;
+    baselines.set(el, now);                                       // right away...
+    setTimeout(() => {                                            // ...and again once the editor has re-rendered (unless the user typed meanwhile)
+      try { const later = flatText(el).text; if (ws(later) === ws(now)) baselines.set(el, later); } catch (_) { /* ignore */ }
+    }, 150);
+  }
+
+  function snapshot(el) {
+    // 1) an explicit selection always wins: the user picked exactly what to check
+    if (el instanceof HTMLTextAreaElement) {
+      const s = el.selectionStart, e = el.selectionEnd;
+      if (s !== e) return { el, kind: "input", sel: true, start: s, end: e, text: el.value.slice(s, e) };
+    } else {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount && !sel.isCollapsed && el.contains(sel.anchorNode)) {
+        return { el, kind: "rich", sel: true, range: sel.getRangeAt(0).cloneRange(), text: sel.toString() };
+      }
+    }
+    // 2) otherwise ONLY what is new or changed since the last clean-up
+    const flat = flatText(el);
+    const kind = el instanceof HTMLTextAreaElement ? "input" : "rich";
+    const base = baselines.get(el);
+    const reg = newRegion(base, flat.text);
+    if (!reg) {
+      if (base !== undefined && base !== flat.text) baselines.set(el, flat.text);   // text was only deleted: just resync
+      return { el, kind, nothingNew: true, empty: !flat.text.trim(), text: "" };
+    }
+    if (kind === "input") return { el, kind, start: reg.a, end: reg.b, text: flat.text.slice(reg.a, reg.b) };
+    const range = rangeFor(flat, reg.a, reg.b);
+    if (!range) return { el, kind, range: null, text: flat.text };  // could not map it back onto the page: whole box
+    return { el, kind, range, text: flat.text.slice(reg.a, reg.b) };
   }
 
   // Replace a range inside a box. spec: textarea => {start,end}; rich => {node,start,end} | {range} | {} (whole box)
@@ -125,7 +211,14 @@
     }
     if (range) {
       range.deleteContents();
-      if (text) range.insertNode(document.createTextNode(text));
+      const node = text ? document.createTextNode(text) : null;
+      if (node) range.insertNode(node);
+      const after = document.createRange();              // leave a plain caret behind, not a selection of the new text
+      if (node) after.setStartAfter(node); else after.setStart(range.startContainer, range.startOffset);
+      after.collapse(true);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(after);
       el.dispatchEvent(new Event("input", { bubbles: true }));
       return true;
     }
@@ -455,8 +548,12 @@
   }
 
   function renderResult(data) {
-    body.replaceChildren(h("div", "title", BRAND), h("div", "sub", "Cleaned version of your text"));
+    const mine = snap;                               // this result belongs to THIS check, even if a newer one starts later
+    const unchanged = data.clean.trim() === mine.text.trim();
+    if (unchanged && !mine.sel) markHandled(mine.el);   // already clean: nothing to apply, count it as done
+    body.replaceChildren(h("div", "title", BRAND), h("div", "sub", "Cleaned version of your new text"));
     body.append(h("div", "box clean", data.clean || "(empty)"));
+    if (unchanged) body.append(h("div", "note", "Already clean, nothing to change."));
     if (data.flagged.length) body.append(h("div", "note", "Flagged: " + data.flagged.join(", ")));
     body.append(h("div", "note", "Changes: " + data.changes));
 
@@ -480,38 +577,50 @@
     const mk = (label, cls, fn) => { const b = keepFocus(h("button", "act " + cls, label)); b.addEventListener("click", fn); return b; };
     row.append(
       mk("Apply", "primary", () => {
-        const spec = snap.kind === "input" ? { start: snap.start, end: snap.end } : (snap.range ? { range: snap.range } : {});
-        const ok = editRange(snap.el, snap.kind, spec, data.clean);
-        if (ok) { closePanel(); scheduleScan(30); } else setStatus("Could not write into this editor. Use Copy instead.");
+        const spec = mine.kind === "input" ? { start: mine.start, end: mine.end } : (mine.range ? { range: mine.range } : {});
+        const ok = editRange(mine.el, mine.kind, spec, data.clean);
+        if (ok) { if (!mine.sel) markHandled(mine.el); closePanel(); scheduleScan(30); } else setStatus("Could not write into this editor. Use Copy instead.");
       }),
       mk("Copy", "", () => navigator.clipboard.writeText(data.clean).catch(() => {})),
-      mk("\uD83D\uDC4D", "", () => rate(data, 1)),
-      mk("\uD83D\uDC4E", "", () => rate(data, -1)),
+      mk("\uD83D\uDC4D", "", () => rate(data, 1, mine)),
+      mk("\uD83D\uDC4E", "", () => rate(data, -1, mine)),
       mk("Close", "", closePanel)
     );
     body.append(row);
   }
 
-  function rate(data, rating) {
+  function rate(data, rating, mine) {
     // saved locally by the server as a small real-world evaluation set (site name only, never the full URL)
-    chrome.runtime.sendMessage({ type: "feedback", original: snap.text, clean: data.clean, rating, host: HOST }).catch(() => {});
+    chrome.runtime.sendMessage({ type: "feedback", original: mine.text, clean: data.clean, rating, host: HOST }).catch(() => {});
   }
 
+  let inflight = false;   // LOCK: while one check is being processed, every other click / hotkey press is ignored
+
   async function run() {
+    if (inflight) { openPanel(); return; }          // already processing: just show the panel (it says Checking...)
     if (!current || !current.isConnected) current = boxOf(deepActive());
     if (!current) return;
     closeCard();
     snap = snapshot(current);
-    const id = ++runId;
     openPanel();
+    if (snap.nothingNew) {                          // nothing was added or changed: send NOTHING to the backend
+      return setStatus(snap.empty ? "Nothing to check yet." : "Nothing new to check. Type a new sentence, or select text to check it again.");
+    }
     if (!snap.text.trim()) return setStatus("Nothing to check yet.");
-    setStatus("Checking...");
+    inflight = true;
     bot.classList.add("busy");
+    setStatus("Checking...");
     let resp;
-    try { resp = await chrome.runtime.sendMessage({ type: "check", text: snap.text }); }
-    catch (_) { bot.classList.remove("busy"); return setStatus("The extension was reloaded. Refresh this page."); }
-    bot.classList.remove("busy");
-    if (id !== runId) return;                       // a newer run replaced this one
+    try {
+      resp = await chrome.runtime.sendMessage({ type: "check", text: snap.text });
+    } catch (_) {
+      return setStatus("The extension was reloaded. Refresh this page.");
+    } finally {
+      inflight = false;                             // always release the lock, even on errors
+      bot.classList.remove("busy");
+    }
+    if (resp && resp.busy) return setStatus("Still processing the previous request. Please wait a moment.");
+    if (resp && resp.empty) return setStatus("Nothing to check yet.");
     if (!resp || !resp.ok) return setStatus("Could not reach the server. Is it running on 127.0.0.1:8000?");
     renderResult(resp.data);
   }
@@ -581,7 +690,7 @@
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") { closeCard(); if (panel.style.display === "block") closePanel(); return; }
     const hot = e.altKey === HOTKEY.alt && e.ctrlKey === HOTKEY.ctrl && e.shiftKey === HOTKEY.shift && e.key === HOTKEY.key;
-    if (hot && active() && boxOf(deepActive()) === current) { e.preventDefault(); e.stopPropagation(); run(); }
+    if (hot && active() && boxOf(deepActive()) === current) { e.preventDefault(); e.stopPropagation(); if (!e.repeat) run(); }
   }, true);
 
   function applySettings(next) {

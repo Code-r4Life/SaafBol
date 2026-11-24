@@ -2,6 +2,7 @@
 // Content scripts run inside the page, so their requests count as the PAGE's (CORS rules, and https pages
 // may not call http://127.0.0.1). The service worker has host_permissions, so ALL network calls go through here.
 const API = "http://127.0.0.1:8000";
+let busy = false; // true while a /check request is being processed
 
 async function post(path, body) {
   const r = await fetch(API + path, {
@@ -15,9 +16,13 @@ async function post(path, body) {
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === "check") {
+    if (!msg.text || !msg.text.trim()) { sendResponse({ ok: false, empty: true }); return; }   // never send empty text (spam)
+    if (busy) { sendResponse({ ok: false, busy: true }); return; }                            // one request at a time
+    busy = true;
     post("/check", { text: msg.text })
       .then((data) => sendResponse({ ok: true, data }))
-      .catch((e) => sendResponse({ ok: false, error: String(e) }));
+      .catch((e) => sendResponse({ ok: false, error: String(e) }))
+      .finally(() => { busy = false; });
     return true; // tells Chrome we will answer asynchronously
   }
   if (msg.type === "feedback") {

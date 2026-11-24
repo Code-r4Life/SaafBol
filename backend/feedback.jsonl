@@ -4,3 +4,5 @@
 {"original": "hi I is Shinjan", "clean": "Hi, I am Shinjan.", "rating": 1, "host": "127.0.0.1", "ts": 1794530886}
 {"original": "WTF", "clean": "W**?", "rating": -1, "host": "claude.ai", "ts": 1794544257}
 {"original": "DANG IT", "clean": "DANG IT", "rating": -1, "host": "claude.ai", "ts": 1794544331}
+{"original": "Are we good to leke stttart?", "clean": "Are we good to leave for the start?", "rating": -1, "host": "chatgpt.com", "ts": 1795551180}
+{"original": "Itz good to be here cunt", "clean": "It's good to be here.", "rating": 1, "host": "chatgpt.com", "ts": 1795551313}
