@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --bg:#fff; --fg:#1d1d28; --muted:#6b7280; --line:#e5e7eb; --accent:#6b63f1; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#212126; --fg:#ececf1; --muted:#9a9aa8; --line:#34343c; } }
+  * { box-sizing: border-box; font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  body { margin: 0; width: 300px; padding: 16px; background: var(--bg); color: var(--fg); font-size: 13px; }
+  h1 { font-size: 16px; margin: 0; } .tag { color: var(--muted); font-size: 12px; margin: 2px 0 14px; }
+  label.row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-top: 1px solid var(--line); cursor: pointer; }
+  .host { color: var(--muted); font-size: 11px; display: block; }
+  input[type=checkbox] { width: 36px; height: 20px; appearance: none; background: #c8ccd4; border-radius: 10px; position: relative; cursor: pointer; transition: background .15s; flex: none; }
+  input[type=checkbox]::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: transform .15s; }
+  input[type=checkbox]:checked { background: var(--accent); } input[type=checkbox]:checked::after { transform: translateX(16px); }
+  input:disabled { opacity: .4; cursor: default; }
+  button { margin-top: 10px; border: 1px solid var(--line); background: transparent; color: var(--fg); border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 12px; }
+  .help { color: var(--muted); font-size: 11.5px; margin-top: 12px; line-height: 1.5; }
+</style>
+</head>
+<body>
+  <h1>SaafBol</h1>
+  <div class="tag">Saaf likho, saaf bolo.</div>
+  <label class="row"><span>Enabled</span><input type="checkbox" id="enabled"></label>
+  <label class="row"><span>On this site<span class="host" id="host"></span></span><input type="checkbox" id="site"></label>
+  <label class="row"><span>Underline slang &amp; bad words</span><input type="checkbox" id="underline"></label>
+  <button id="reset">Reset bot position on this site</button>
+  <div class="help">Click the bot (or press <b>Alt+Enter</b>) to clean the whole box. Drag the bot anywhere. Click an underlined word for a quick fix. <b>Esc</b> closes things.</div>
+  <script src="popup.js"></script>
+</body>
+</html>

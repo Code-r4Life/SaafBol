@@ -1,0 +1,40 @@
+category,input,output,bad_left,meaning,retention,unchanged
+clean,The meeting starts at 10 AM tomorrow.,The meeting starts at 10 AM tomorrow.,0,1.0,1.0,1
+clean,I need to assess the class schedule.,I need to assess the class schedule.,0,1.0,1.0,1
+clean,Please send me the report by Friday.,Please send the report by Friday.,0,0.968,0.857,0
+clean,She is going to the library after lunch.,She is going to the library after lunch.,0,1.0,1.0,1
+clean,"The bus was late, so we missed the first lecture.","The bus was late, so we missed the first lecture.",0,1.0,1.0,1
+clean,Can you help me with this assignment?,Can you help me with this assignment?,0,1.0,1.0,1
+clean,We are meeting at the cafeteria at noon.,We are meeting at the cafeteria at noon.,0,1.0,1.0,1
+clean,He bought a new laptop yesterday.,He bought a new laptop yesterday.,0,1.0,1.0,1
+grammar,She dont like apples,She doesn't like apples.,0,0.964,0.75,0
+grammar,He go to school every day,He goes to school every day.,0,0.978,0.833,0
+grammar,Their going to the park tomorrow.,They're going to the park tomorrow.,0,0.957,0.833,0
+grammar,I seen the movie yesterday and it was realy good,I saw the movie yesterday and it was really good.,0,0.929,0.8,0
+grammar,The teacher dont know nothing about this topic,The teacher doesn't know anything about this topic.,0,0.898,0.75,0
+grammar,Me and him was late to class,Me and him was late for class.,0,0.982,0.857,0
+slang,"bro i is gonna go there, its lit af",I am going to go there; it is really exciting.,0,0.598,0.8,0
+slang,idk why u keep ignoring my texts lol,I do not know why you keep ignoring my texts.,0,0.815,1.0,0
+slang,tbh the exam was kinda hard,"Honestly, the exam was kind of hard.",0,0.868,1.0,0
+slang,pls send me the notes cuz i missed class,Please send me the notes because I missed class.,0,0.938,1.0,0
+slang,dude that presentation was legit amazing,That presentation was truly amazing.,0,0.8,1.0,0
+slang,that happens irl all the time,That happens in real life all the time.,0,0.636,1.0,0
+slang,"wanna grab lunch, im starving af",Want to grab lunch; I am starving.,0,0.901,1.0,0
+insult,you are a bastard and you never listen,"You are an unpleasant person, and you never listen.",0,0.716,0.857,0
+insult,that rascal stole my bike yesterday,That troublemaker stole my bike yesterday.,0,0.663,1.0,0
+insult,"tbh he's a clown, idk why u trust him","Honestly, he's a fool; I do not know why you trust him.",0,0.682,1.0,0
+insult,only an idiot would believe that,Only a fool would believe that.,0,0.74,0.8,0
+insult,stop being so stupid and read the instructions,Stop being so foolish and read the instructions.,0,0.907,1.0,0
+insult,my manager is a jerk who never says thanks,My manager is an unpleasant person who never says thanks.,0,0.921,0.875,0
+insult,those morons ruined the whole project,Those fools ruined the whole project.,0,0.828,0.833,0
+insult,"you dumb kid, give me back my pen","You foolish kid, give me back my pen.",0,0.902,0.875,0
+profanity,"this is bullshit, the teacher dont know nothing",This is nonsense; the teacher doesn't know anything.,0,0.813,0.714,0
+profanity,what the hell is wrong with you,What the heck is wrong with you?,0,0.9,1.0,0
+profanity,shut the fuck up and listen to me,Shut up and listen to me.,0,0.838,0.857,0
+profanity,this damn printer is useless,This darn printer is useless.,0,0.896,1.0,0
+profanity,get your ass over here right now,Get over here right now.,0,0.613,0.833,0
+profanity,that movie was crap and a waste of money,That movie was nonsense and a waste of money.,0,0.873,1.0,0
+mixed,"bro u r such an idiot, idk why i even talk to u",You are such a fool; I do not know why I even talked to you.,0,0.577,0.714,0
+mixed,this app sucks and ur team is dumb af,"This app is bad, and your team is foolish.",0,0.821,0.714,0
+mixed,"omg stop being stupid, its not that hard","Omg, stop being foolish; it is not that hard.",0,0.795,0.857,0
+mixed,"he dont know shit about cars, the dumb jerk","He doesn't know anything about cars, the unpleasant person.",0,0.799,0.714,0
